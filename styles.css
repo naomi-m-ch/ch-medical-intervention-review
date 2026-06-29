@@ -186,14 +186,28 @@ textarea {
 
 .review-card {
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   text-align: left;
+}
+
+.review-select {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  padding: 2px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .review-card.active {
@@ -203,6 +217,24 @@ textarea {
 
 .review-card small {
   color: #bdcac3;
+}
+
+.draft-delete {
+  min-height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7c7c7;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.draft-delete:hover,
+.draft-delete:focus-visible {
+  border-color: rgba(247, 199, 199, 0.6);
+  background: rgba(184, 59, 59, 0.24);
 }
 
 .mini-badge,

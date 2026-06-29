@@ -200,6 +200,28 @@ function createReview(review = emptyReview()) {
   return review.id;
 }
 
+function removeReview(reviewId) {
+  const review = state.reviews.find((item) => item.id === reviewId);
+  if (!review) return;
+
+  const label = review.intervention || "Untitled intervention";
+  const confirmed = window.confirm(`Remove draft review "${label}"? This cannot be undone.`);
+  if (!confirmed) return;
+
+  state.reviews = state.reviews.filter((item) => item.id !== reviewId);
+  if (!state.reviews.length) {
+    state.activeId = createReview(emptyReview());
+  } else if (state.activeId === reviewId) {
+    state.activeId = state.reviews[0].id;
+    persist();
+  } else {
+    persist();
+  }
+
+  fillForm(activeReview());
+  render();
+}
+
 function activeReview() {
   return state.reviews.find((review) => review.id === state.activeId) || state.reviews[0];
 }
@@ -216,6 +238,16 @@ function maturityLabel(value) {
     D: "Level D: established in practice",
     E: "Level E: guideline-supported / standard of care"
   }[value] || value;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  })[character]);
 }
 
 function getScores(review) {
@@ -462,21 +494,30 @@ function renderReviewList() {
 
   reviews.forEach((review) => {
     const decision = frameworkDecision(review);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `review-card ${review.id === state.activeId ? "active" : ""}`;
-    button.innerHTML = `
-      <span class="mini-badge ${decisionClass(decision.label)}">${decision.label}</span>
-      <strong>${review.intervention || "Untitled intervention"}</strong>
-      <small>${review.indication || "No indication entered"}</small>
+    const interventionLabel = review.intervention || "Untitled intervention";
+    const indicationLabel = review.indication || "No indication entered";
+    const card = document.createElement("article");
+    card.className = `review-card ${review.id === state.activeId ? "active" : ""}`;
+    card.innerHTML = `
+      <button class="review-select" type="button">
+        <span class="mini-badge ${decisionClass(decision.label)}">${decision.label}</span>
+        <strong>${escapeHtml(interventionLabel)}</strong>
+        <small>${escapeHtml(indicationLabel)}</small>
+      </button>
+      <button class="draft-delete" type="button" aria-label="Remove ${escapeHtml(interventionLabel)} draft">
+        Remove
+      </button>
     `;
-    button.addEventListener("click", () => {
+    card.querySelector(".review-select").addEventListener("click", () => {
       updateReviewFromForm();
       state.activeId = review.id;
       fillForm(activeReview());
       render();
     });
-    els.reviewList.append(button);
+    card.querySelector(".draft-delete").addEventListener("click", () => {
+      removeReview(review.id);
+    });
+    els.reviewList.append(card);
   });
 }
 
