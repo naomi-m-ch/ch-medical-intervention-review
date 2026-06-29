@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cascaid Medical Intervention Review</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="Saved intervention reviews">
+        <div class="brand">
+          <span class="brand-mark">C</span>
+          <div>
+            <p>Cascaid</p>
+            <h1>Medical Intervention Review</h1>
+          </div>
+        </div>
+
+        <button id="newReviewButton" class="primary-button full-width" type="button">New review</button>
+
+        <label class="search-control">
+          <span>Find review</span>
+          <input id="searchInput" type="search" placeholder="Intervention, indication, outcome">
+        </label>
+
+        <section class="filter-group" aria-labelledby="review-list-heading">
+          <h2 id="review-list-heading">Draft Reviews</h2>
+          <div id="reviewList" class="review-list"></div>
+        </section>
+
+        <section class="filter-group" aria-labelledby="framework-heading">
+          <h2 id="framework-heading">Framework Anchors</h2>
+          <div class="anchor-list">
+            <span>Benefit-harm balance</span>
+            <span>Clinical evidence certainty</span>
+            <span>Governance and defensibility</span>
+            <span>Patient-centred acceptability</span>
+            <span>Re-review triggers</span>
+          </div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Input-first review workspace</p>
+            <h2>Capture the reasoning behind a medical intervention decision</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="duplicateButton" class="ghost-button" type="button">Duplicate</button>
+            <button id="saveButton" class="primary-button" type="button">Save review</button>
+          </div>
+        </header>
+
+        <section class="metrics" aria-label="Review summary">
+          <article>
+            <span id="decisionMetric">Draft</span>
+            <p>Framework decision</p>
+          </article>
+          <article>
+            <span id="coreMetric">0/9</span>
+            <p>Core pillar score</p>
+          </article>
+          <article>
+            <span id="supportMetric">0/15</span>
+            <p>Supporting pillar score</p>
+          </article>
+          <article>
+            <span id="gateMetric">Pass</span>
+            <p>Initial gate</p>
+          </article>
+          <article>
+            <span id="agreementMetric">-</span>
+            <p>Expert agreement</p>
+          </article>
+        </section>
+
+        <section class="review-grid">
+          <form id="reviewForm" class="form-panel">
+            <section class="form-section">
+              <div class="section-heading">
+                <span>1</span>
+                <div>
+                  <h3>Intervention Profile</h3>
+                  <p>Define the decision question before scoring.</p>
+                </div>
+              </div>
+              <div class="field-grid two">
+                <label>
+                  <span>Intervention</span>
+                  <input name="intervention" type="text" placeholder="e.g. BPC-157">
+                </label>
+                <label>
+                  <span>Classification</span>
+                  <select name="classification">
+                    <option>Food supplement</option>
+                    <option>Licensed medicine</option>
+                    <option>Unlicensed medicine / special</option>
+                    <option>Interventional procedure</option>
+                    <option>Behavioural / lifestyle intervention</option>
+                    <option>Other</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Indication / use case</span>
+                  <input name="indication" type="text" placeholder="Clinical problem or intended role">
+                </label>
+                <label>
+                  <span>Target population</span>
+                  <input name="population" type="text" placeholder="Who is this for?">
+                </label>
+                <label>
+                  <span>Comparator</span>
+                  <input name="comparator" type="text" placeholder="Usual care, placebo, standard pathway">
+                </label>
+                <label>
+                  <span>Delivery context</span>
+                  <select name="setting">
+                    <option>Cascaid Clinic</option>
+                    <option>Remote</option>
+                    <option>Cascaid service</option>
+                    <option>Specialist / external provider</option>
+                    <option>Research-only setting</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>Decision question</span>
+                <textarea name="question" rows="3" placeholder="Should Cascaid recommend this intervention, for whom, compared with what, and under what conditions?"></textarea>
+              </label>
+            </section>
+
+            <section class="form-section">
+              <div class="section-heading">
+                <span>2</span>
+                <div>
+                  <h3>Initial Screen</h3>
+                  <p>Red flags block routine recommendation before full scoring.</p>
+                </div>
+              </div>
+              <div class="gate-grid">
+                <label class="switch-card">
+                  <input name="redFlag" type="checkbox">
+                  <span class="help-label">Unresolved red flag <button class="help-dot" type="button" aria-label="Help: unresolved red flag" data-help="A material concern that should block routine recommendation until resolved. Examples include unclear legal status, major safety warnings, WADA issues, unverified sterility or product quality, or a requirement for competence that Cascaid cannot safely meet.">?</button></span>
+                  <small>Regulatory, legality, safety warning, WADA issue, competence, sterility, or product quality concern.</small>
+                </label>
+                <label class="switch-card">
+                  <input name="supplementIntegrity" type="checkbox">
+                  <span class="help-label">Product integrity confirmed <button class="help-dot" type="button" aria-label="Help: product integrity" data-help="Use this when ingredient identity, dose standardisation, third-party testing, contamination risk, and batch quality have been reviewed enough for the intended use.">?</button></span>
+                  <small>Third-party testing, ingredient identity, dose standardisation, and contamination risk reviewed.</small>
+                </label>
+                <label class="switch-card">
+                  <input name="offLabel" type="checkbox">
+                  <span class="help-label">Off-label or non-standard use <button class="help-dot" type="button" aria-label="Help: off-label or non-standard use" data-help="Use this when the proposed use differs from licensed indication, standard clinical practice, or accepted pathway. The review should document why standard approaches are insufficient and what informed consent must say.">?</button></span>
+                  <small>Traditional approaches, informed consent, and defensible language need explicit documentation.</small>
+                </label>
+              </div>
+              <label>
+                <span>Gate notes</span>
+                <textarea name="gateNotes" rows="3" placeholder="Document pass/fail reasoning and any examples or boundaries needed for consistent interpretation."></textarea>
+              </label>
+            </section>
+
+            <section class="form-section">
+              <div class="section-heading">
+                <span>3</span>
+                <div>
+                  <h3>Expert Review Setup</h3>
+                  <p>Add a second independent expert review when the intervention needs panel comparison.</p>
+                </div>
+              </div>
+              <div class="field-grid two">
+                <label>
+                  <span>Expert 1</span>
+                  <input name="expert1Name" type="text" placeholder="Primary reviewer name / discipline">
+                </label>
+                <label>
+                  <span>Expert 2</span>
+                  <input name="expert2Name" type="text" placeholder="Second reviewer name / discipline">
+                </label>
+              </div>
+              <label class="switch-card wide">
+                <input name="secondExpertEnabled" type="checkbox">
+                <span class="help-label">Enable second expert review <button class="help-dot" type="button" aria-label="Help: second expert review" data-help="Turn this on when a second subject matter expert should independently score the same intervention. The app will summarise agreement, disagreement, and items that need panel discussion before implementation.">?</button></span>
+                <small>Expert 2 scores are compared against Expert 1 and used to guide discussion priorities.</small>
+              </label>
+            </section>
+
+            <section class="form-section">
+              <div class="section-heading">
+                <span>4</span>
+                <div>
+                  <h3>Pillar Scoring</h3>
+                  <p>Score 0-3 and record the evidence, uncertainty, and gaps.</p>
+                </div>
+              </div>
+              <div id="pillarInputs" class="pillar-inputs"></div>
+            </section>
+
+            <section class="form-section">
+              <div class="section-heading">
+                <span>5</span>
+                <div>
+                  <h3>Cross-Cutting Ratings</h3>
+                  <p>Apply certainty and maturity across benefit, harm, subgroup fit, and real-world applicability.</p>
+                </div>
+              </div>
+              <div class="field-grid two">
+                <label>
+                  <span class="help-label">Evidence certainty <button class="help-dot" type="button" aria-label="Help: evidence certainty" data-help="GRADE-style confidence in the body of evidence. High means further evidence is unlikely to change confidence; very low means the true effect may be substantially different.">?</button></span>
+                  <select name="certainty">
+                    <option>Very low</option>
+                    <option>Low</option>
+                    <option>Moderate</option>
+                    <option>High</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="help-label">Evidence maturity <button class="help-dot" type="button" aria-label="Help: evidence maturity" data-help="Signals where the intervention sits from concept to standard care: A is mechanistic only, B early clinical signal, C emerging comparative evidence, D established practice, E guideline-supported or standard of care.">?</button></span>
+                  <select name="maturity">
+                    <option value="A">Level A: conceptual / mechanistic only</option>
+                    <option value="B">Level B: early clinical signal</option>
+                    <option value="C">Level C: emerging comparative evidence</option>
+                    <option value="D">Level D: established in practice</option>
+                    <option value="E">Level E: guideline-supported / standard of care</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="help-label">Subject matter experts <button class="help-dot" type="button" aria-label="Help: subject matter experts" data-help="Record who scored or reviewed the intervention, ideally with discipline or role. Use Expert 1 and Expert 2 fields above for independent scoring; use this field for panel members or additional reviewers.">?</button></span>
+                  <input name="experts" type="text" placeholder="Names / disciplines">
+                </label>
+                <label>
+                  <span class="help-label">Conflict of interest <button class="help-dot" type="button" aria-label="Help: conflict of interest" data-help="Capture commercial, professional, referral, supplier, or personal interests that could influence judgement. Use 'none declared' only after checking.">?</button></span>
+                  <input name="coi" type="text" placeholder="Commercial interests or none declared">
+                </label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <div class="section-heading">
+                <span>6</span>
+                <div>
+                  <h3>Decision Output</h3>
+                  <p>Make restrictions, monitoring, and re-review triggers visible.</p>
+                </div>
+              </div>
+              <div class="field-grid two">
+                <label>
+                  <span class="help-label">Recommendation override <button class="help-dot" type="button" aria-label="Help: recommendation override" data-help="Leave this on framework decision unless the panel intentionally departs from the automatic thresholds. Any override should be explained in the rationale.">?</button></span>
+                  <select name="overrideDecision">
+                    <option>Use framework decision</option>
+                    <option>Implement</option>
+                    <option>Implement with Restrictions</option>
+                    <option>Re-Review when further evidence supports</option>
+                    <option>Do not implement</option>
+                  </select>
+                </label>
+                <label>
+                  <span class="help-label">Re-review interval <button class="help-dot" type="button" aria-label="Help: re-review interval" data-help="How soon the decision should be revisited. Fast-moving longevity, supplement, regulatory, or emerging intervention areas often need a 6-month review trigger.">?</button></span>
+                  <select name="reviewInterval">
+                    <option>6 months</option>
+                    <option>3 months</option>
+                    <option>12 months</option>
+                    <option>Evidence-triggered only</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>Rationale</span>
+                <textarea name="rationale" rows="4" placeholder="Why this decision follows from the benefit, safety, governance, and implementation evidence."></textarea>
+              </label>
+              <label>
+                <span>Restrictions / conditions</span>
+                <textarea name="restrictions" rows="3" placeholder="Population boundaries, specialist-only use, monitoring, informed consent, or exclusion criteria."></textarea>
+              </label>
+              <label>
+                <span>Evidence that would change the judgement</span>
+                <textarea name="triggers" rows="3" placeholder="Prospective trials, safety data, product quality, regulatory clarity, real-world effectiveness, etc."></textarea>
+              </label>
+            </section>
+          </form>
+
+          <aside class="output-panel">
+            <section class="summary-card">
+              <div class="panel-heading">
+                <h3>Live Decision</h3>
+                <span id="decisionBadge" class="decision-badge">Draft</span>
+              </div>
+              <p id="decisionExplanation" class="decision-explanation"></p>
+              <div id="gateWarnings" class="warning-list"></div>
+            </section>
+
+            <section class="summary-card">
+              <div class="panel-heading">
+                <h3>Pillar Map</h3>
+                <span id="certaintyBadge" class="score-pill">Very low</span>
+              </div>
+              <div id="pillarBars" class="pillar-list"></div>
+            </section>
+
+            <section class="summary-card">
+              <div class="panel-heading">
+                <h3>Expert Comparison</h3>
+                <span id="comparisonBadge" class="score-pill">Single review</span>
+              </div>
+              <div id="comparisonPanel" class="comparison-list"></div>
+            </section>
+
+            <section class="summary-card">
+              <div class="panel-heading">
+                <h3>Review Note</h3>
+                <button id="copySummaryButton" class="ghost-button" type="button">Copy</button>
+              </div>
+              <pre id="summaryOutput" class="summary-output"></pre>
+            </section>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
