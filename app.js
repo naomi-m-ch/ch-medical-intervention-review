@@ -644,7 +644,7 @@ function renderMasterView() {
   }
 
   if (!rows.length) {
-    els.masterTableBody.innerHTML = `<tr><td colspan="6">No interventions have been listed yet.</td></tr>`;
+    els.masterTableBody.innerHTML = `<tr><td colspan="8">No interventions have been listed yet.</td></tr>`;
     return;
   }
 
@@ -660,6 +660,8 @@ function renderMasterView() {
           </button>
           <small>${escapeHtml(row.review.indication || "No indication entered")}</small>
         </td>
+        <td>${escapeHtml(row.review.classification || "Not classified")}</td>
+        <td>${escapeHtml(row.review.population || "Not specified")}</td>
         <td><span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span></td>
         <td>${row.scores.coreTotal}/9</td>
         <td>${row.scores.supportingTotal}/15</td>
