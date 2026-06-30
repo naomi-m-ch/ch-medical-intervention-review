@@ -131,6 +131,10 @@ const storageKey = "cascaid-medical-intervention-reviews";
 const els = {
   form: document.querySelector("#reviewForm"),
   pillarInputs: document.querySelector("#pillarInputs"),
+  reviewPage: document.querySelector("#reviewPage"),
+  masterPage: document.querySelector("#masterPage"),
+  reviewViewButton: document.querySelector("#reviewViewButton"),
+  masterViewButton: document.querySelector("#masterViewButton"),
   reviewList: document.querySelector("#reviewList"),
   secondReviewList: document.querySelector("#secondReviewList"),
   completedReviewList: document.querySelector("#completedReviewList"),
@@ -151,13 +155,20 @@ const els = {
   certaintyBadge: document.querySelector("#certaintyBadge"),
   comparisonBadge: document.querySelector("#comparisonBadge"),
   comparisonPanel: document.querySelector("#comparisonPanel"),
-  summaryOutput: document.querySelector("#summaryOutput")
+  summaryOutput: document.querySelector("#summaryOutput"),
+  masterTotalCount: document.querySelector("#masterTotalCount"),
+  masterDiscussionCount: document.querySelector("#masterDiscussionCount"),
+  masterCompleteCount: document.querySelector("#masterCompleteCount"),
+  boardDiscussionBadge: document.querySelector("#boardDiscussionBadge"),
+  boardDiscussionList: document.querySelector("#boardDiscussionList"),
+  masterTableBody: document.querySelector("#masterTableBody")
 };
 
 const state = {
   reviews: loadReviews(),
   activeId: null,
-  query: ""
+  query: "",
+  view: "review"
 };
 
 state.activeId = state.reviews[0]?.id || createReview(sampleReview);
@@ -359,6 +370,14 @@ function reviewStatus(review) {
   const comparison = expertComparison(review);
   if (comparison.enabled && comparison.missing.length) return "second-review";
   return "completed";
+}
+
+function reviewStatusLabel(review) {
+  return {
+    draft: "Draft",
+    "second-review": "Second review required",
+    completed: "Completed"
+  }[reviewStatus(review)];
 }
 
 function isBlankReview(review) {
@@ -574,6 +593,93 @@ function renderReviewGroup(container, reviews, emptyMessage) {
   });
 }
 
+function masterRowData(review) {
+  const decision = frameworkDecision(review);
+  const scores = getScores(review);
+  const comparison = expertComparison(review);
+  const agreement = comparison.enabled
+    ? comparison.missing.length
+      ? `Awaiting ${comparison.missing.length}`
+      : `${comparison.agreements.length}/${pillars.length}`
+    : "Single review";
+  return { review, decision, scores, comparison, agreement };
+}
+
+function renderMasterView() {
+  const rows = state.reviews.map(masterRowData);
+  const discussionRows = rows.filter((row) => row.comparison.enabled && row.comparison.disagreements.length);
+  const completedRows = rows.filter((row) => reviewStatus(row.review) === "completed");
+
+  els.masterTotalCount.textContent = rows.length;
+  els.masterDiscussionCount.textContent = discussionRows.length;
+  els.masterCompleteCount.textContent = completedRows.length;
+  els.boardDiscussionBadge.textContent = `${discussionRows.length} flagged`;
+
+  if (!discussionRows.length) {
+    els.boardDiscussionList.innerHTML = `<div class="master-empty">No expert disagreements currently require board discussion.</div>`;
+  } else {
+    els.boardDiscussionList.innerHTML = discussionRows.map((row) => {
+      const interventionLabel = row.review.intervention || "Untitled intervention";
+      const priorityText = row.comparison.priorities.length
+        ? row.comparison.priorities.map((item) => item.pillar.name).join(", ")
+        : row.comparison.disagreements.map((item) => item.pillar.name).join(", ");
+      const disagreementText = row.comparison.disagreements
+        .map((item) => `${item.pillar.name}: ${item.expert1} vs ${item.expert2}`)
+        .join("; ");
+      return `
+        <article class="board-card">
+          <div>
+            <span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span>
+            <h4>${escapeHtml(interventionLabel)}</h4>
+            <p>${escapeHtml(row.review.indication || "No indication entered")}</p>
+          </div>
+          <dl>
+            <div><dt>Agreement</dt><dd>${row.agreement}</dd></div>
+            <div><dt>Discussion focus</dt><dd>${escapeHtml(priorityText)}</dd></div>
+            <div><dt>Score differences</dt><dd>${escapeHtml(disagreementText)}</dd></div>
+          </dl>
+        </article>
+      `;
+    }).join("");
+  }
+
+  if (!rows.length) {
+    els.masterTableBody.innerHTML = `<tr><td colspan="6">No interventions have been listed yet.</td></tr>`;
+    return;
+  }
+
+  els.masterTableBody.innerHTML = rows.map((row) => {
+    const interventionLabel = row.review.intervention || "Untitled intervention";
+    const status = reviewStatusLabel(row.review);
+    const discussionClass = row.comparison.enabled && row.comparison.disagreements.length ? " discussion-needed" : "";
+    return `
+      <tr class="${discussionClass}">
+        <td>
+          <button class="table-link" type="button" data-review-id="${row.review.id}">
+            ${escapeHtml(interventionLabel)}
+          </button>
+          <small>${escapeHtml(row.review.indication || "No indication entered")}</small>
+        </td>
+        <td><span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span></td>
+        <td>${row.scores.coreTotal}/9</td>
+        <td>${row.scores.supportingTotal}/15</td>
+        <td>${escapeHtml(row.agreement)}</td>
+        <td>${escapeHtml(status)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  els.masterTableBody.querySelectorAll("[data-review-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      updateReviewFromForm();
+      state.activeId = button.dataset.reviewId;
+      fillForm(activeReview());
+      setView("review");
+      render();
+    });
+  });
+}
+
 function renderSummary() {
   const review = activeReview();
   const decision = frameworkDecision(review);
@@ -713,10 +819,22 @@ function render() {
   syncSecondExpertVisibility(activeReview());
   renderReviewList();
   renderSummary();
+  renderMasterView();
+}
+
+function setView(view) {
+  state.view = view;
+  const isMaster = view === "master";
+  els.reviewPage.classList.toggle("active", !isMaster);
+  els.masterPage.classList.toggle("active", isMaster);
+  els.reviewViewButton.classList.toggle("active", !isMaster);
+  els.masterViewButton.classList.toggle("active", isMaster);
+  document.body.classList.toggle("master-view-on", isMaster);
 }
 
 renderPillarInputs();
 fillForm(activeReview());
+setView("review");
 render();
 
 els.form.addEventListener("input", () => {
@@ -733,12 +851,26 @@ els.searchInput.addEventListener("input", (event) => {
   updateReviewFromForm();
   state.query = event.target.value;
   renderReviewList();
+  renderMasterView();
 });
 
 els.newReviewButton.addEventListener("click", () => {
   updateReviewFromForm();
   state.activeId = createReview(emptyReview());
   fillForm(activeReview());
+  setView("review");
+  render();
+});
+
+els.reviewViewButton.addEventListener("click", () => {
+  updateReviewFromForm();
+  setView("review");
+  render();
+});
+
+els.masterViewButton.addEventListener("click", () => {
+  updateReviewFromForm();
+  setView("master");
   render();
 });
 

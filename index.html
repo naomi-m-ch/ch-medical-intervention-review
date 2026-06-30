@@ -17,6 +17,11 @@
           </div>
         </div>
 
+        <div class="view-switch" aria-label="Dashboard views">
+          <button id="reviewViewButton" class="view-button active" type="button">Review workspace</button>
+          <button id="masterViewButton" class="view-button" type="button">Master view</button>
+        </div>
+
         <button id="newReviewButton" class="primary-button full-width" type="button">New review</button>
 
         <label class="search-control">
@@ -63,6 +68,7 @@
           </div>
         </header>
 
+        <section id="reviewPage" class="page-view active">
         <section class="metrics" aria-label="Review summary">
           <article>
             <span id="decisionMetric">Draft</span>
@@ -325,6 +331,60 @@
               <pre id="summaryOutput" class="summary-output"></pre>
             </section>
           </aside>
+        </section>
+        </section>
+
+        <section id="masterPage" class="page-view master-page" aria-labelledby="master-page-heading">
+          <div class="master-heading">
+            <div>
+              <p class="eyebrow">Master intervention view</p>
+              <h3 id="master-page-heading">High-level implementation picture</h3>
+            </div>
+            <div class="master-counts" aria-label="Intervention counts">
+              <article>
+                <strong id="masterTotalCount">0</strong>
+                <span>Total listed</span>
+              </article>
+              <article>
+                <strong id="masterDiscussionCount">0</strong>
+                <span>Board discussion</span>
+              </article>
+              <article>
+                <strong id="masterCompleteCount">0</strong>
+                <span>Completed</span>
+              </article>
+            </div>
+          </div>
+
+          <section class="master-section" aria-labelledby="board-discussion-heading">
+            <div class="panel-heading">
+              <h3 id="board-discussion-heading">Interventions Requiring Board Discussion</h3>
+              <span id="boardDiscussionBadge" class="score-pill">0 flagged</span>
+            </div>
+            <div id="boardDiscussionList" class="board-discussion-list"></div>
+          </section>
+
+          <section class="master-section" aria-labelledby="all-interventions-heading">
+            <div class="panel-heading">
+              <h3 id="all-interventions-heading">All Listed Interventions</h3>
+              <span class="score-pill">Live from saved reviews</span>
+            </div>
+            <div class="master-table-wrap">
+              <table class="master-table">
+                <thead>
+                  <tr>
+                    <th>Intervention</th>
+                    <th>Framework decision</th>
+                    <th>Core pillar</th>
+                    <th>Supporting pillar</th>
+                    <th>Expert agreement</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="masterTableBody"></tbody>
+              </table>
+            </div>
+          </section>
         </section>
       </section>
     </main>
