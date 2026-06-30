@@ -605,6 +605,14 @@ function masterRowData(review) {
   return { review, decision, scores, comparison, agreement };
 }
 
+function openReview(reviewId) {
+  updateReviewFromForm();
+  state.activeId = reviewId;
+  fillForm(activeReview());
+  setView("review");
+  render();
+}
+
 function renderMasterView() {
   const rows = state.reviews.map(masterRowData);
   const discussionRows = rows.filter((row) => row.comparison.enabled && row.comparison.disagreements.length);
@@ -630,7 +638,9 @@ function renderMasterView() {
         <article class="board-card">
           <div>
             <span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span>
-            <h4>${escapeHtml(interventionLabel)}</h4>
+            <button class="board-card-link" type="button" data-review-id="${row.review.id}">
+              ${escapeHtml(interventionLabel)}
+            </button>
             <p>${escapeHtml(row.review.indication || "No indication entered")}</p>
           </div>
           <dl>
@@ -660,9 +670,9 @@ function renderMasterView() {
           </button>
           <small>${escapeHtml(row.review.indication || "No indication entered")}</small>
         </td>
+        <td><span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span></td>
         <td>${escapeHtml(row.review.classification || "Not classified")}</td>
         <td>${escapeHtml(row.review.population || "Not specified")}</td>
-        <td><span class="mini-badge ${decisionClass(row.decision.label)}">${row.decision.label}</span></td>
         <td>${row.scores.coreTotal}/9</td>
         <td>${row.scores.supportingTotal}/15</td>
         <td>${escapeHtml(row.agreement)}</td>
@@ -673,11 +683,12 @@ function renderMasterView() {
 
   els.masterTableBody.querySelectorAll("[data-review-id]").forEach((button) => {
     button.addEventListener("click", () => {
-      updateReviewFromForm();
-      state.activeId = button.dataset.reviewId;
-      fillForm(activeReview());
-      setView("review");
-      render();
+      openReview(button.dataset.reviewId);
+    });
+  });
+  els.boardDiscussionList.querySelectorAll("[data-review-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openReview(button.dataset.reviewId);
     });
   });
 }

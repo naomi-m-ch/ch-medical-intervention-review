@@ -885,14 +885,30 @@ label {
   background: #fff8ee;
 }
 
-.board-card h4,
 .board-card p {
   margin: 0;
 }
 
-.board-card h4 {
-  margin-top: 8px;
+.board-card-link {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--teal);
   font-size: 1rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.board-card-link:hover,
+.board-card-link:focus-visible,
+.table-link:hover,
+.table-link:focus-visible {
+  text-decoration: underline;
+}
+
+.board-card-link {
+  margin-top: 8px;
 }
 
 .board-card p,
