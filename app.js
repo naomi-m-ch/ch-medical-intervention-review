@@ -60,6 +60,7 @@ const pillars = [
 const sampleReview = {
   id: crypto.randomUUID(),
   updatedAt: new Date().toISOString(),
+  completedAt: "",
   intervention: "BPC-157",
   classification: "Unlicensed medicine / special",
   indication: "Musculoskeletal healing / recovery",
@@ -98,6 +99,7 @@ const sampleReview = {
 const emptyReview = () => ({
   id: crypto.randomUUID(),
   updatedAt: new Date().toISOString(),
+  completedAt: "",
   intervention: "",
   classification: "Food supplement",
   indication: "",
@@ -130,6 +132,7 @@ const els = {
   form: document.querySelector("#reviewForm"),
   pillarInputs: document.querySelector("#pillarInputs"),
   reviewList: document.querySelector("#reviewList"),
+  completedReviewList: document.querySelector("#completedReviewList"),
   searchInput: document.querySelector("#searchInput"),
   newReviewButton: document.querySelector("#newReviewButton"),
   duplicateButton: document.querySelector("#duplicateButton"),
@@ -175,6 +178,7 @@ function normalizeReview(review) {
     ...review,
     pillars: {}
   };
+  next.completedAt = review.completedAt || "";
   next.secondExpertEnabled = Boolean(review.secondExpertEnabled);
   next.expert1Name = review.expert1Name || "";
   next.expert2Name = review.expert2Name || "";
@@ -238,6 +242,38 @@ function maturityLabel(value) {
     D: "Level D: established in practice",
     E: "Level E: guideline-supported / standard of care"
   }[value] || value;
+}
+
+function normalizeSearch(value) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function reviewSearchText(review) {
+  const pillarText = pillars.flatMap((pillar) => {
+    const value = review.pillars?.[pillar.id] || {};
+    return [pillar.name, value.rationale, value.expert2Rationale];
+  });
+  return normalizeSearch([
+    review.intervention,
+    review.classification,
+    review.indication,
+    review.population,
+    review.comparator,
+    review.setting,
+    review.question,
+    review.gateNotes,
+    review.expert1Name,
+    review.expert2Name,
+    review.certainty,
+    review.maturity,
+    review.experts,
+    review.coi,
+    review.rationale,
+    review.restrictions,
+    review.triggers,
+    frameworkDecision(review).label,
+    ...pillarText
+  ].join(" "));
 }
 
 function escapeHtml(value) {
@@ -480,15 +516,22 @@ function syncSecondExpertVisibility(review = activeReview()) {
 }
 
 function renderReviewList() {
-  const query = state.query.toLowerCase().trim();
+  const query = normalizeSearch(state.query);
   const reviews = state.reviews.filter((review) => {
-    const haystack = [review.intervention, review.indication, review.population, frameworkDecision(review).label].join(" ").toLowerCase();
+    const haystack = reviewSearchText(review);
     return !query || haystack.includes(query);
   });
+  const draftReviews = reviews.filter((review) => !review.completedAt);
+  const completedReviews = reviews.filter((review) => review.completedAt);
 
-  els.reviewList.innerHTML = "";
+  renderReviewGroup(els.reviewList, draftReviews, "No draft reviews match this search.");
+  renderReviewGroup(els.completedReviewList, completedReviews, "No completed reviews match this search.");
+}
+
+function renderReviewGroup(container, reviews, emptyMessage) {
+  container.innerHTML = "";
   if (!reviews.length) {
-    els.reviewList.innerHTML = `<div class="empty">No saved reviews match this search.</div>`;
+    container.innerHTML = `<div class="empty">${emptyMessage}</div>`;
     return;
   }
 
@@ -517,7 +560,7 @@ function renderReviewList() {
     card.querySelector(".draft-delete").addEventListener("click", () => {
       removeReview(review.id);
     });
-    els.reviewList.append(card);
+    container.append(card);
   });
 }
 
@@ -677,6 +720,7 @@ els.form.addEventListener("change", () => {
 });
 
 els.searchInput.addEventListener("input", (event) => {
+  updateReviewFromForm();
   state.query = event.target.value;
   renderReviewList();
 });
@@ -694,6 +738,7 @@ els.duplicateButton.addEventListener("click", () => {
   copy.id = crypto.randomUUID();
   copy.intervention = `${copy.intervention || "Untitled intervention"} copy`;
   copy.updatedAt = new Date().toISOString();
+  copy.completedAt = "";
   state.activeId = createReview(copy);
   fillForm(activeReview());
   render();
@@ -701,6 +746,7 @@ els.duplicateButton.addEventListener("click", () => {
 
 els.saveButton.addEventListener("click", () => {
   updateReviewFromForm();
+  activeReview().completedAt = new Date().toISOString();
   persist();
   els.saveButton.textContent = "Saved";
   window.setTimeout(() => {
