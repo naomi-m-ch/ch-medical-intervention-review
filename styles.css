@@ -39,6 +39,20 @@ textarea {
   font-weight: 400;
 }
 
+#reviewForm input,
+#reviewForm select,
+#reviewForm textarea,
+.search-control input,
+option {
+  font-family: inherit;
+  font-weight: 400 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-weight: 400;
+}
+
 button {
   cursor: pointer;
 }

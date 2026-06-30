@@ -132,6 +132,7 @@ const els = {
   form: document.querySelector("#reviewForm"),
   pillarInputs: document.querySelector("#pillarInputs"),
   reviewList: document.querySelector("#reviewList"),
+  secondReviewList: document.querySelector("#secondReviewList"),
   completedReviewList: document.querySelector("#completedReviewList"),
   searchInput: document.querySelector("#searchInput"),
   newReviewButton: document.querySelector("#newReviewButton"),
@@ -209,7 +210,7 @@ function removeReview(reviewId) {
   if (!review) return;
 
   const label = review.intervention || "Untitled intervention";
-  const confirmed = window.confirm(`Remove draft review "${label}"? This cannot be undone.`);
+  const confirmed = window.confirm(`Remove review "${label}"? This cannot be undone.`);
   if (!confirmed) return;
 
   state.reviews = state.reviews.filter((item) => item.id !== reviewId);
@@ -351,6 +352,13 @@ function expertComparison(review) {
     });
 
   return { enabled: true, agreements, disagreements, missing, priorities };
+}
+
+function reviewStatus(review) {
+  if (!review.completedAt) return "draft";
+  const comparison = expertComparison(review);
+  if (comparison.enabled && comparison.missing.length) return "second-review";
+  return "completed";
 }
 
 function isBlankReview(review) {
@@ -521,10 +529,12 @@ function renderReviewList() {
     const haystack = reviewSearchText(review);
     return !query || haystack.includes(query);
   });
-  const draftReviews = reviews.filter((review) => !review.completedAt);
-  const completedReviews = reviews.filter((review) => review.completedAt);
+  const draftReviews = reviews.filter((review) => reviewStatus(review) === "draft");
+  const secondReviewReviews = reviews.filter((review) => reviewStatus(review) === "second-review");
+  const completedReviews = reviews.filter((review) => reviewStatus(review) === "completed");
 
   renderReviewGroup(els.reviewList, draftReviews, "No draft reviews match this search.");
+  renderReviewGroup(els.secondReviewList, secondReviewReviews, "No reviews are awaiting a second review.");
   renderReviewGroup(els.completedReviewList, completedReviews, "No completed reviews match this search.");
 }
 
@@ -547,7 +557,7 @@ function renderReviewGroup(container, reviews, emptyMessage) {
         <strong>${escapeHtml(interventionLabel)}</strong>
         <small>${escapeHtml(indicationLabel)}</small>
       </button>
-      <button class="draft-delete" type="button" aria-label="Remove ${escapeHtml(interventionLabel)} draft">
+      <button class="draft-delete" type="button" aria-label="Remove ${escapeHtml(interventionLabel)} review">
         Remove
       </button>
     `;
