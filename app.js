@@ -127,7 +127,6 @@ const emptyReview = () => ({
 });
 
 const storageKey = "cascaid-medical-intervention-reviews";
-const airtableEndpointKey = "cascaid-airtable-sync-endpoint";
 
 const els = {
   form: document.querySelector("#reviewForm"),
@@ -140,8 +139,6 @@ const els = {
   secondReviewList: document.querySelector("#secondReviewList"),
   completedReviewList: document.querySelector("#completedReviewList"),
   searchInput: document.querySelector("#searchInput"),
-  airtableEndpointInput: document.querySelector("#airtableEndpointInput"),
-  airtableStatus: document.querySelector("#airtableStatus"),
   newReviewButton: document.querySelector("#newReviewButton"),
   duplicateButton: document.querySelector("#duplicateButton"),
   saveButton: document.querySelector("#saveButton"),
@@ -171,8 +168,7 @@ const state = {
   reviews: loadReviews(),
   activeId: null,
   query: "",
-  view: "review",
-  airtableEndpoint: loadAirtableEndpoint()
+  view: "review"
 };
 
 state.activeId = state.reviews[0]?.id || createReview(sampleReview);
@@ -186,17 +182,6 @@ function loadReviews() {
   } catch {
     return [sampleReview];
   }
-}
-
-function loadAirtableEndpoint() {
-  return localStorage.getItem(airtableEndpointKey) || "";
-}
-
-function persistAirtableEndpoint(value) {
-  state.airtableEndpoint = value.trim();
-  if (state.airtableEndpoint) localStorage.setItem(airtableEndpointKey, state.airtableEndpoint);
-  else localStorage.removeItem(airtableEndpointKey);
-  renderAirtableStatus(state.airtableEndpoint ? "Ready" : "Not configured");
 }
 
 function normalizeReview(review) {
@@ -620,81 +605,6 @@ function masterRowData(review) {
   return { review, decision, scores, comparison, agreement };
 }
 
-function airtablePayload(review) {
-  const row = masterRowData(review);
-  const status = reviewStatusLabel(review);
-  const boardDiscussionRequired = row.comparison.enabled && row.comparison.disagreements.length > 0;
-  const pillarScores = pillars.map((pillar) => {
-    const value = review.pillars[pillar.id] || {};
-    return {
-      pillar: pillar.name,
-      type: pillar.type,
-      expert1Score: Number(value.score || 0),
-      expert1Rationale: value.rationale || "",
-      expert2Score: value.expert2Score === "" ? null : Number(value.expert2Score),
-      expert2Rationale: value.expert2Rationale || "",
-      conservativeScore: consensusScore(review, pillar.id)
-    };
-  });
-
-  return {
-    fields: {
-      "Review ID": review.id,
-      "Intervention": review.intervention || "Untitled intervention",
-      "Classification": review.classification,
-      "Indication": review.indication,
-      "Target population": review.population,
-      "Comparator": review.comparator,
-      "Delivery context": review.setting,
-      "Framework decision": row.decision.label,
-      "Review status": status,
-      "Core pillar score": row.scores.coreTotal,
-      "Supporting pillar score": row.scores.supportingTotal,
-      "Expert agreement": row.agreement,
-      "Board discussion required": boardDiscussionRequired,
-      "Discussion priorities": row.comparison.priorities.map((item) => item.pillar.name).join(", "),
-      "Evidence certainty": review.certainty,
-      "Evidence maturity": maturityLabel(review.maturity),
-      "Restrictions / conditions": review.restrictions,
-      "Re-review interval": review.reviewInterval,
-      "Evidence triggers": review.triggers,
-      "Updated at": review.updatedAt,
-      "Completed at": review.completedAt || ""
-    },
-    review,
-    decision: row.decision,
-    scores: row.scores,
-    comparison: row.comparison,
-    pillarScores
-  };
-}
-
-function renderAirtableStatus(message, tone = "") {
-  els.airtableStatus.textContent = message;
-  els.airtableStatus.className = `sync-status ${tone}`.trim();
-}
-
-async function syncReviewToAirtable(review) {
-  if (!state.airtableEndpoint) {
-    renderAirtableStatus("Not configured");
-    return { skipped: true };
-  }
-
-  renderAirtableStatus("Syncing...");
-  const response = await fetch(state.airtableEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(airtablePayload(review))
-  });
-
-  if (!response.ok) {
-    throw new Error(`Airtable sync failed (${response.status})`);
-  }
-
-  renderAirtableStatus(`Synced ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`, "success");
-  return { synced: true };
-}
-
 function openReview(reviewId) {
   updateReviewFromForm();
   state.activeId = reviewId;
@@ -937,8 +847,6 @@ function setView(view) {
 
 renderPillarInputs();
 fillForm(activeReview());
-els.airtableEndpointInput.value = state.airtableEndpoint;
-renderAirtableStatus(state.airtableEndpoint ? "Ready" : "Not configured");
 setView("review");
 render();
 
@@ -957,14 +865,6 @@ els.searchInput.addEventListener("input", (event) => {
   state.query = event.target.value;
   renderReviewList();
   renderMasterView();
-});
-
-els.airtableEndpointInput.addEventListener("input", (event) => {
-  persistAirtableEndpoint(event.target.value);
-});
-
-els.airtableEndpointInput.addEventListener("change", (event) => {
-  persistAirtableEndpoint(event.target.value);
 });
 
 els.newReviewButton.addEventListener("click", () => {
@@ -999,17 +899,11 @@ els.duplicateButton.addEventListener("click", () => {
   render();
 });
 
-els.saveButton.addEventListener("click", async () => {
-  persistAirtableEndpoint(els.airtableEndpointInput.value);
+els.saveButton.addEventListener("click", () => {
   updateReviewFromForm();
   activeReview().completedAt = new Date().toISOString();
   persist();
   els.saveButton.textContent = "Saved";
-  try {
-    await syncReviewToAirtable(activeReview());
-  } catch (error) {
-    renderAirtableStatus(error.message, "error");
-  }
   window.setTimeout(() => {
     els.saveButton.textContent = "Save review";
   }, 1200);
