@@ -29,6 +29,15 @@
           <input id="searchInput" type="search" placeholder="Intervention, indication, outcome">
         </label>
 
+        <section class="sync-panel" aria-labelledby="airtable-sync-heading">
+          <h2 id="airtable-sync-heading">Airtable Sync</h2>
+          <label>
+            <span>Endpoint</span>
+            <input id="airtableEndpointInput" type="url" placeholder="https://...">
+          </label>
+          <p id="airtableStatus" class="sync-status">Not configured</p>
+        </section>
+
         <section class="filter-group" aria-labelledby="review-list-heading">
           <h2 id="review-list-heading">Draft Reviews</h2>
           <div id="reviewList" class="review-list"></div>
